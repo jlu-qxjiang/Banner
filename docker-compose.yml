@@ -1,0 +1,47 @@
+services:
+  server:
+    build:
+      context: .
+      dockerfile: server/Dockerfile
+    image: banner-server:latest
+    ports:
+      - "8080:8080"
+    networks:
+      - banner
+    environment:
+      - PORT=8080
+    # runtime hardening: read-only rootfs, no Linux capabilities, no privilege gain
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
+
+  client:
+    build:
+      context: .
+      dockerfile: client/Dockerfile
+    image: banner-client:latest
+    depends_on:
+      server:
+        condition: service_healthy
+    networks:
+      - banner
+    environment:
+      - FINGERPRINT_SERVER=http://server:8080
+    volumes:
+      - ./data:/data:ro
+    command: ["-file", "/data/sample.json"]
+    read_only: true
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    restart: "no"
+
+networks:
+  banner:
+    driver: bridge
