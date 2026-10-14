@@ -7,16 +7,16 @@ import (
 )
 
 //go:embed rules.json
+// embeddedRules 是编译期打入二进制内的规则文件内容。
 var embeddedRules []byte
 
-// RulesSet is the on-disk format of the rules file.
+// RulesSet 是规则文件的磁盘存储格式。
 type RulesSet struct {
 	Rules []Rule `json:"rules"`
 }
 
-// LoadDefaultRules returns a compiled Engine from the embedded rules. When the
-// RULES_FILE environment variable points at an external file, that file is used
-// instead, so recognition rules can be updated without recompiling the binary.
+// LoadDefaultRules 从内嵌规则文件加载并编译出识别引擎。当 RULES_FILE
+// 环境变量指向某个外部文件时,优先使用该文件,从而无需重编译即可更新规则。
 func LoadDefaultRules() (*Engine, error) {
 	data := embeddedRules
 	if p := os.Getenv("RULES_FILE"); p != "" {

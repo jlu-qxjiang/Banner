@@ -5,12 +5,14 @@ import (
 	"testing"
 )
 
+// TestIdentify 用题目示例中的各类 banner 验证识别结果的正确性。
 func TestIdentify(t *testing.T) {
 	e, err := LoadDefaultRules()
 	if err != nil {
 		t.Fatalf("load rules: %v", err)
 	}
 
+	// 用例表:输入 banner 及期望的协议/软件/版本/系统提示
 	cases := []struct {
 		name     string
 		input    Input
@@ -42,6 +44,7 @@ func TestIdentify(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 			got := e.Identify(c.input)
+			// 逐字段比对识别结果
 			if got.Protocol != c.protocol {
 				t.Errorf("protocol = %q, want %q", got.Protocol, c.protocol)
 			}
@@ -58,8 +61,7 @@ func TestIdentify(t *testing.T) {
 	}
 }
 
-// TestEngineNeverPanics ensures arbitrary (including empty/binary) banners can
-// never crash the engine.
+// TestEngineNeverPanics 确保任意 banner(含空串、纯二进制)都不会让引擎崩溃。
 func TestEngineNeverPanics(t *testing.T) {
 	e, _ := LoadDefaultRules()
 	banners := []string{"", "\x00\x00\x00", "\x16\x03\x01", "HTTP/1.1 200", "220", "-ERR", "SSH-2.0-", "garbage\r\n", "\xff\xfe\xfd"}
@@ -71,8 +73,8 @@ func TestEngineNeverPanics(t *testing.T) {
 	}
 }
 
-// TestUnescapeHexEscape verifies the non-standard \xNN -> \u00NN rewrite that
-// lets JSON with raw-byte escapes be parsed.
+// TestUnescapeHexEscape 验证非标准 \xNN → \u00NN 重写逻辑,确保带原始字节
+// 转义的 JSON 能被正常解析。
 func TestUnescapeHexEscape(t *testing.T) {
 	raw := []byte(`[{"ip":"1.2.3.7","port":3306,"banner":"J\x00\x00\x00\n8.0.32\x00"}]`)
 	data := UnescapeHexEscape(raw)
@@ -83,6 +85,7 @@ func TestUnescapeHexEscape(t *testing.T) {
 	if len(inputs) != 1 {
 		t.Fatalf("len = %d, want 1", len(inputs))
 	}
+	// banner 应已还原为真实的空字节与换行符
 	want := "J\x00\x00\x00\n8.0.32\x00"
 	if inputs[0].Banner != want {
 		t.Errorf("banner = %q, want %q", inputs[0].Banner, want)

@@ -10,7 +10,7 @@ services:
       - banner
     environment:
       - PORT=8080
-    # runtime hardening: read-only rootfs, no Linux capabilities, no privilege gain
+    # 运行时加固:只读根文件系统、丢弃所有 Linux 能力、禁止提权
     read_only: true
     tmpfs:
       - /tmp
@@ -25,6 +25,7 @@ services:
       context: .
       dockerfile: client/Dockerfile
     image: banner-client:latest
+    # 依赖 server 健康就绪后才启动(真实健康检测)
     depends_on:
       server:
         condition: service_healthy
@@ -32,9 +33,11 @@ services:
       - banner
     environment:
       - FINGERPRINT_SERVER=http://server:8080
+    # 只读挂载本地 data 目录,供 client 读取输入文件
     volumes:
       - ./data:/data:ro
     command: ["-file", "/data/sample.json"]
+    # 一次性任务,不重启
     read_only: true
     cap_drop:
       - ALL
@@ -43,5 +46,6 @@ services:
     restart: "no"
 
 networks:
+  # 内部网络,仅 server 对外暴露端口
   banner:
     driver: bridge
